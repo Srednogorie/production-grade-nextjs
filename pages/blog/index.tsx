@@ -28,8 +28,28 @@ const Blog = ({ posts }) => {
   )
 }
 
-Blog.defaultProps = {
-  posts: [],
+export async function getStaticProps(ctx) {
+  // read the posts dir from the fs
+  const postsDirectory = path.join(process.cwd(), 'posts')
+  const filenames = fs.readdirSync(postsDirectory)
+  // get each post from the fs
+  const filePosts = filenames.map((filename) => {
+    const filePath = path.join(postsDirectory, filename)
+    return fs.readFileSync(filePath, 'utf8')
+  })
+
+  // merge our posts from our CMS and fs then sort by pub date
+  const posts = orderby(
+    [...postsFromCMS.published, ...filePosts].map((content) => {
+      // extract frontmatter from markdown content
+      const { data } = matter(content)
+      return data
+    }),
+    ['publishedOn'],
+    ['desc'],
+  )
+
+  return { props: { posts } }
 }
 
 export default Blog
