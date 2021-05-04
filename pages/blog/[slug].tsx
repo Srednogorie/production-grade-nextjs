@@ -8,6 +8,9 @@ import Container from '../../components/container'
 import HomeNav from '../../components/homeNav'
 import path from 'path'
 import fs from 'fs'
+import {posts} from '../../content'
+import matter from 'gray-matter'
+import renderToString from 'next-mdx-remote/render-to-string'
 
 const BlogPost: FC<Post> = ({ source, frontMatter }) => {
   const content = hydrate(source)
@@ -16,7 +19,7 @@ const BlogPost: FC<Post> = ({ source, frontMatter }) => {
   if (router.isFallback) {
     return (
       <Pane width="100%" height="100%">
-        <Spinner size={48} />
+        <Spinner size={100} />
       </Pane>
     )
   }
@@ -61,8 +64,29 @@ export async function getStaticPaths() {
  * Posts can come from the fs or our CMS
  */
 
-export function getStaticProps() {
+export async function getStaticProps({ params, preview }) {
+  let postFile
+  // is the slug for a file system post or cms post
+  try {
+    const postPath = path.join(process.cwd(), 'posts', `${params.slug}.mdx`)
+    postFile = fs.readFileSync(postPath, 'utf-8')
+  } catch {
+    // check that cookie
+    const collection = preview ? posts.draft : posts.published
+    postFile = collection.find((p) => {
+      const { data } = matter(p)
+      return data.slug === params.slug
+    })
+  }
 
+  if (!postFile) {
+    throw new Error('no post')
+  }
+
+  const { content, data } = matter(postFile)
+  const mdxSource = await renderToString(content, { scope: data })
+
+  return { props: { source: mdxSource, frontMatter: data }, revalidate: 30 }
 }
 
 export default BlogPost
