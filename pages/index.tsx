@@ -39,8 +39,9 @@ const Home: FC<{ content: { hero: any; features: any[] } }> = ({ content }) => {
  * Should really get this content from our CMS
  */
 // at the bottom
-export function getStaticProps() {
-  return { props: { content: home.published } }
+export function getStaticProps(ctx) {
+  const content = ctx.preview ? home.draft : home.published
+  return { props: { content } }
 }
 Home.defaultProps = {
   content: {

@@ -29,19 +29,17 @@ const Blog = ({ posts }) => {
 }
 
 export async function getStaticProps(ctx) {
-  // read the posts dir from the fs
   const postsDirectory = path.join(process.cwd(), 'posts')
   const filenames = fs.readdirSync(postsDirectory)
-  // get each post from the fs
+  // check that preview boolean
+  const cmsPosts = ctx.preview ? postsFromCMS.draft : postsFromCMS.published
   const filePosts = filenames.map((filename) => {
     const filePath = path.join(postsDirectory, filename)
     return fs.readFileSync(filePath, 'utf8')
   })
 
-  // merge our posts from our CMS and fs then sort by pub date
   const posts = orderby(
-    [...postsFromCMS.published, ...filePosts].map((content) => {
-      // extract frontmatter from markdown content
+    [...cmsPosts, ...filePosts].map((content) => {
       const { data } = matter(content)
       return data
     }),
