@@ -6,6 +6,7 @@ export default (req, res) =>
     session: {
       // use JWTs instead
       jwt: true,
+      maxAge: 120,
     },
     jwt: {
       secret: process.env.JWT_SECRET,
